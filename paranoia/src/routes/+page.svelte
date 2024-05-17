@@ -93,6 +93,13 @@
     event.target.classList.remove('ripple');
   }
 
+  function handleKeyPress(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      addQuestion();
+    }
+  }
+
 </script>
 
 <div use:swipe={{ timeframe: 300, minSwipeDistance: 60 }} on:swipe={handleSwipe} class="container mx-auto p-4 h-screen flex flex-col">
@@ -111,6 +118,7 @@
         <input
           type="text"
           bind:value={newQuestion}
+          on:keypress={handleKeyPress}
           placeholder="Add a new question"
           class="p-2 flex-grow border rounded"
         />
