@@ -7,7 +7,7 @@ declare global {
         // interface PageData {}
         interface Platform {
             env: {
-                DB: PARANOIA_DB;
+                PARANOIA_DB: D1Database,
             };
             context: {
                 waitUntil(promise: Promise<any>): void;

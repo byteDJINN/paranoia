@@ -5,7 +5,7 @@ import type { RequestHandler } from "@sveltejs/kit";
 export async function GET({ request, platform }) {
     console.log(platform);
     let result = await platform.env.PARANOIA_DB.prepare(
-        "SELECT * FROM users LIMIT 5"
+        "SELECT * FROM questions"
     ).run();
     return new Response(JSON.stringify(result));
 }
