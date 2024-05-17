@@ -29,6 +29,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@cloudflare/d1": "^1.4.1"
+    "@cloudflare/d1": "^1.4.1",
+    "svelte-gestures": "^4.0.0"
   }
 }

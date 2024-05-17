@@ -39,12 +39,32 @@
     await getQuestions();
     newQuestion = '';
   }
+
+    function rippleEffect(event) {
+      const btn = event.currentTarget;
+
+      const circle = document.createElement("span");
+      const diameter = Math.max(btn.clientWidth, btn.clientHeight);
+      const radius = diameter / 2;
+
+      circle.style.width = circle.style.height = `${diameter}px`;
+      circle.style.left = `${event.clientX - (btn.offsetLeft + radius)}px`;
+      circle.style.top = `${event.clientY - (btn.offsetTop + radius)}px`;
+      circle.classList.add("ripple");
+
+      const ripples = btn.getElementsByClassName("ripple");
+      if (ripples.length >= 10) {
+        ripples[0].remove();
+      }
+
+      btn.appendChild(circle);
+    }
 </script>
 
 <div class="container mx-auto p-4 h-screen flex flex-col">
   <ul class="list-none p-0 flex-grow overflow-y-auto mb-16">
     {#each $questions as question}
-      <li class="p-2 mb-2 bg-gray-100 rounded">{question.question}</li>
+      <li on:click={rippleEffect} class="relative overflow-hidden p-2 mb-2 bg-gray-100 rounded">{question.question}</li>
     {/each}
   </ul>
   <div class="fixed bottom-0 left-0 right-0 p-4 bg-white shadow-lg">
