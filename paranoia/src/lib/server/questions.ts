@@ -1,8 +1,8 @@
 import { Broadcaster } from './broadcaster';
+import { v4 as uuid } from 'uuid';
+import { readFileSync } from 'fs';
 
-const maxQuestions = 10;
-// the voteDuration should also be the polling interval in the client
-const voteDuration = 30 * 1000; // 10 seconds
+const maxQuestions = 100;
 
 interface QuestionData {
   text: string;
@@ -19,7 +19,21 @@ interface Vote {
 let questions: { [key: string]: QuestionData } = {};
 
 // Queue to store vote records
-let votes: { [key: number]: Vote } = {};
+let votes: { [key: string]: Vote } = {};
+
+
+
+// use the $static/examples.txt split one on each line to list
+let examples = readFileSync('static/examples.txt', 'utf8').split('\n');
+let lastAutoPost = Date.now();
+const autoPostInterval = 30000;
+
+setInterval(() => {
+  if (Date.now() - lastAutoPost > autoPostInterval) {
+    lastAutoPost = Date.now();
+    addQuestion(examples[Math.floor(Math.random() * examples.length)]);
+  }
+}, 10000);
 
 export const changeBroadcaster: Broadcaster = new Broadcaster();
 
@@ -65,9 +79,8 @@ function checkQuestions() {
 }
 
 function checkVotes() {
-  const now = Date.now();
   for (const userId in votes) {
-    if (!changeBroadcaster.getWaitingUsers().includes(parseInt(userId))) {
+    if (!changeBroadcaster.getWaitingUsers().includes(userId)) {
       votes[userId].questions.forEach((question) => {
         if (existsQuestion(question)) {
           questions[question].votes -= 1;
@@ -78,8 +91,7 @@ function checkVotes() {
   }
 }
 
-export function processVotes(userId: number, newVotes: string[]) {
-
+export function processVotes(userId: string, newVotes: string[]) {
   if (!(userId in votes)) {
     votes[userId] = {
       questions: [],
@@ -101,21 +113,16 @@ export function processVotes(userId: number, newVotes: string[]) {
   votes[userId].questions.forEach((question) => {
     if (existsQuestion(question)) {
       questions[question].votes += 1;
+    } else {
+      // Remove the question from the vote if it doesn't exist
+      votes[userId].questions = votes[userId].questions.filter((value) => value !== question);
     }
   });
+
   checkVotes();
   changeBroadcaster.broadcast();
 }
 
 export function generateUserId() {
-  let userId = Math.floor(Math.random() * 1000000);
-  for (let i = 0; i < 10; i++) {
-    if (userId in votes) {
-      userId = Math.floor(Math.random() * 1000000);
-    }
-  }
-  if (userId in votes) {
-    return null;
-  }
-  return userId; 
+  return uuid();
 }

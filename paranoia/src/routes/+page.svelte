@@ -5,6 +5,7 @@
   let votes = [];
   let questions = {};
   let userId = null;
+  let examples = [];
 
   onMount(async () => {
     await getQuestions();
@@ -13,7 +14,11 @@
     if (localStorage.getItem('votes')) {
       votes = JSON.parse(localStorage.getItem('votes'));
     }
-
+    const response = await fetch('/examples.txt');
+    const data = await response.text();
+    examples = data.split('\n');
+    examples = examples.map((example) => example.trim());
+    typeExample();
     longPoll();
   });
 
@@ -23,6 +28,25 @@
     if (newQuestion.length > 0 && newQuestion[0] === ' ') {
       newQuestion = newQuestion.trimStart();
     }
+  }
+
+  async function typeExample() {
+    const example = examples[Math.floor(Math.random() * examples.length)];
+    const questionInput = document.getElementById('questionInput');
+    // type letters one at a time
+    for (let i = 23; i <= example.length; i++) {
+      questionInput.placeholder = example.slice(0, i);
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    // pause at fully typed
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    // delete one by one
+    for (let i = example.length; i >= 23; i--) {
+      questionInput.placeholder = example.slice(0, i);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    setTimeout(typeExample, 100);
   }
   
   async function getUserId() {
@@ -116,25 +140,32 @@
 
 </script>
 
-<div class="container mx-auto p-4 h-screen flex flex-col bg-gray-100">
+<div class="container mx-auto p-4 min-h-screen h-full flex flex-col bg-gray-100">
   <div id="viewAll">
     <ul class="list-none p-0 flex-grow overflow-y-auto mb-16 relative">
-      {#each Object.keys(questions).sort((a, b) => questions[b].votes - questions[a].votes) as question}
-        <li on:click={handleTapQuestion} class="relative overflow-hidden p-2 mb-2 rounded transition {votes.includes(question) ? 'bg-purple-200 ' : 'bg-white'}">
-          <span class="ml-2">{question}</span>
-          <span class="absolute right-0 top-0 bottom-0 flex items-center px-2 bg-purple-800 text-white">
+      {#each Object.keys(questions).sort((a, b) => {
+        if (questions[b].votes === questions[a].votes) {
+          return questions[b].timestamp - questions[a].timestamp;
+        }
+        return questions[b].votes - questions[a].votes;
+      }) as question}
+        <li on:click={handleTapQuestion} class="relative flex justify-between overflow-hidden mb-2 rounded transition {votes.includes(question) ? 'bg-purple-200 ' : 'bg-white'}">
+          <span class="m-2">{question}</span>
+          <span class="flex items-center px-2 bg-purple-800 text-white">
             {questions[question].votes}
           </span>
         </li>
       {/each}
     </ul>
-    <div class="fixed bottom-0 left-0 right-0 p-4 bg-white shadow-lg">
+    <div class="fixed bottom-0 left-0 right-0 px-4 py-1 bg-white shadow-lg">
       <div class="flex items-center">
-        <input
+        <textarea
+          id="questionInput"
           type="text"
+          rows="2"
           bind:value={newQuestion}
           on:keypress={handleKeyPress}
-          placeholder="Add a new question"
+          placeholder="who is most likely to"
           class="p-2 flex-grow border rounded"
         />
         <button

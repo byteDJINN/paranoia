@@ -1,5 +1,5 @@
 type Listener = {
-  userId: number;
+  userId: string;
   resolve: () => void;
 };
 
@@ -15,13 +15,13 @@ export class Broadcaster {
     this.listeners.push(listener);
   }
 
-  wait(userId: number): Promise<void> {
+  wait(userId: string): Promise<void> {
     return new Promise((resolve) => {
       this.onBroadcast({ userId, resolve });
     });
   }
 
-  getWaitingUsers(): number[] {
+  getWaitingUsers(): string[] {
     return this.listeners.map(listener => listener.userId);
   }
 }

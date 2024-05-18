@@ -3,7 +3,7 @@ import { changeBroadcaster, getQuestions, addQuestion, existsQuestion } from "$l
 
 export async function GET({ request, platform }) {
     if (request.url.includes("userId=")) {
-        let userId = parseInt(request.url.split("userId=")[1]);
+        let userId = request.url.split("userId=")[1];
         if (!userId) {
             return new Response(JSON.stringify({ error: "Invalid userId" }), { status: 400 });
         }
