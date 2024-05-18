@@ -1,17 +1,27 @@
+type Listener = {
+  userId: number;
+  resolve: () => void;
+};
+
 export class Broadcaster {
-  private listeners: Array<() => void> = [];
+  private listeners: Listener[] = [];
 
   broadcast() {
-    this.listeners.forEach(listener => listener());
+    this.listeners.forEach(listener => listener.resolve());
+    this.listeners = []; // Clear listeners after broadcasting
   }
 
-  onBroadcast(listener: () => void) {
+  onBroadcast(listener: Listener) {
     this.listeners.push(listener);
   }
 
-  wait(): Promise<void> {
+  wait(userId: number): Promise<void> {
     return new Promise((resolve) => {
-      this.onBroadcast(() => resolve());
+      this.onBroadcast({ userId, resolve });
     });
+  }
+
+  getWaitingUsers(): number[] {
+    return this.listeners.map(listener => listener.userId);
   }
 }

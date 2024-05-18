@@ -24,17 +24,17 @@ let votes: { [key: number]: Vote } = {};
 export const changeBroadcaster: Broadcaster = new Broadcaster();
 
 export function getQuestions() {
-  return questions;
+  return {questions: questions, votes: votes};
 }
 
 export function addQuestion(question: string) {
   questions[question] = {
     text: question,
-    votes: 1,
+    votes: 0,
     timestamp: Date.now(),
   };
-  changeBroadcaster.broadcast();
   checkQuestions();
+  changeBroadcaster.broadcast();
 }
 
 export function existsQuestion(question: string) {
@@ -67,7 +67,7 @@ function checkQuestions() {
 function checkVotes() {
   const now = Date.now();
   for (const userId in votes) {
-    if (now - votes[userId].timestamp > voteDuration) {
+    if (!changeBroadcaster.getWaitingUsers().includes(parseInt(userId))) {
       votes[userId].questions.forEach((question) => {
         if (existsQuestion(question)) {
           questions[question].votes -= 1;
@@ -103,9 +103,8 @@ export function processVotes(userId: number, newVotes: string[]) {
       questions[question].votes += 1;
     }
   });
-
-  changeBroadcaster.broadcast();
   checkVotes();
+  changeBroadcaster.broadcast();
 }
 
 export function generateUserId() {

@@ -39,14 +39,24 @@
   }
 
   async function longPoll() {
-    await getQuestions(1);
-    longPoll();
+    const result = await getQuestions(1);
+    if (!result) {
+      return;
+    }
+    setTimeout(longPoll, 100);
   }
 
   async function getQuestions(poll=0) {
-    const response = await fetch(`/api/questions?poll=${poll}`);
+    const response = poll ? await fetch(`/api/questions?userId=${userId}`) : await fetch('/api/questions');
     const data = await response.json();
-    questions = data;
+    if (data.votes[userId]) {
+      votes = data.votes[userId].questions;
+    }
+    questions = data.questions;
+    if (response.status === 400) {
+      console.error(data.error);
+    }
+    return response.status === 200;
   }
 
   async function addQuestion() {
