@@ -1,12 +1,10 @@
 import type { RequestHandler } from "@sveltejs/kit";
+import { getQuestions, addQuestion } from "$lib/server/questions";
 
 
-/** @type {import('@sveltejs/kit').RequestHandler} */
 export async function GET({ request, platform }) {
-    let result = await platform.env.PARANOIA_DB.prepare(
-        "SELECT * FROM questions"
-    ).run();
-    return new Response(JSON.stringify(result));
+    let questions = await getQuestions();
+    return new Response(JSON.stringify(questions));
 }
 
 export async function POST({ request, platform }) {
@@ -15,17 +13,13 @@ export async function POST({ request, platform }) {
     data.text = data.text.replace(/[^a-z0-9 ]/g, '');
     data.text = data.text.trim();
     if (data.text.length < 1) {
-        return new Response("Invalid question", { status: 400 });
+        return new Response(JSON.stringify({ error: "Question must be at least 1 character" }), { status: 400 });
     }
     // check if it already exists
-    let exists = await platform.env.PARANOIA_DB.prepare(
-        "SELECT * FROM questions WHERE question = ?"
-    ).bind(data.text).run();
-    if (exists.results.length > 0) {
-        return new Response("Question already exists", { status: 409 });
+    let questions = await getQuestions();
+    if (questions.includes(data.text)) {
+        return new Response(JSON.stringify({ error: "Question already exists" }), { status: 400 });
     }
-    let result = await platform.env.PARANOIA_DB.prepare(
-        "INSERT INTO questions (question) VALUES (?)"
-    ).bind(data.text).run();
-    return new Response(JSON.stringify(result));
+    await addQuestion(data.text);
+    return new Response(JSON.stringify({ success: true }));
 }

@@ -21,7 +21,7 @@
   async function getQuestions() {
     const response = await fetch('/api/questions');
     const data = await response.json();
-    questions.set(data.results);
+    questions.set(data);
   }
 
   async function addQuestion() {
@@ -108,7 +108,7 @@
     <ul class="list-none p-0 flex-grow overflow-y-auto mb-16 relative">
       {#each $questions as question}
         <div on:dblclick={e => favQuestions.includes(question) ? favQuestions = favQuestions.filter(q => q !== question) : favQuestions = [...favQuestions, question]}>
-          <li on:animationend={onRippleEnd} on:click={rippleEffect} class="relative overflow-hidden p-2 mb-2 {favQuestions.includes(question) ? "bg-gray-300" : "bg-gray-100"} rounded">{question.question}</li>
+          <li on:animationend={onRippleEnd} on:click={rippleEffect} class="relative overflow-hidden p-2 mb-2 {favQuestions.includes(question) ? "bg-gray-300" : "bg-gray-100"} rounded">{question}</li>
         </div>
 
       {/each}
@@ -136,7 +136,7 @@
     <ul class="list-none p-0 flex-grow overflow-y-auto mb-16 relative">
       {#each favQuestions as question}
         <div on:dblclick={e => favQuestions.includes(question) ? favQuestions = favQuestions.filter(q => q !== question) : favQuestions = [...favQuestions, question]}>
-          <li on:animationend={onRippleEnd} on:click={rippleEffect} class="relative overflow-hidden p-2 mb-2 bg-gray-100 rounded">{question.question}</li>
+          <li on:animationend={onRippleEnd} on:click={rippleEffect} class="relative overflow-hidden p-2 mb-2 bg-gray-100 rounded">{question}</li>
         </div>
       {/each}
   </div>
