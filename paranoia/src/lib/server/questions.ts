@@ -1,6 +1,6 @@
 import { Broadcaster } from './broadcaster';
 import { v4 as uuid } from 'uuid';
-import { readFileSync } from 'fs';
+import { examples } from '$lib/examples';
 
 const maxQuestions = 100;
 
@@ -21,10 +21,7 @@ let questions: { [key: string]: QuestionData } = {};
 // Queue to store vote records
 let votes: { [key: string]: Vote } = {};
 
-
-
 // use the $static/examples.txt split one on each line to list
-let examples = readFileSync('static/examples.txt', 'utf8').split('\n');
 let lastAutoPost = Date.now();
 const autoPostInterval = 30000;
 

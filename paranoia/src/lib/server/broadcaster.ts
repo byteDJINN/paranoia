@@ -16,9 +16,11 @@ export class Broadcaster {
   }
 
   wait(userId: string): Promise<void> {
-    return new Promise((resolve) => {
-      this.onBroadcast({ userId, resolve });
-    });
+    return Promise.race([
+      new Promise<void>((resolve) => {
+        this.onBroadcast({ userId, resolve });
+      })
+    ]);
   }
 
   getWaitingUsers(): string[] {
