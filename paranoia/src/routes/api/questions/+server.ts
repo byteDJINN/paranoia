@@ -1,9 +1,11 @@
-import type { RequestHandler } from "@sveltejs/kit";
-import { getQuestions, addQuestion } from "$lib/server/questions";
+import { changeBroadcaster, getQuestions, addQuestion, existsQuestion } from "$lib/server/questions";
 
 
 export async function GET({ request, platform }) {
-    let questions = await getQuestions();
+    if (request.url.includes("poll=1")) {
+        await changeBroadcaster.wait();
+    }
+    let questions = getQuestions();
     return new Response(JSON.stringify(questions));
 }
 
@@ -16,10 +18,10 @@ export async function POST({ request, platform }) {
         return new Response(JSON.stringify({ error: "Question must be at least 1 character" }), { status: 400 });
     }
     // check if it already exists
-    let questions = await getQuestions();
-    if (questions.includes(data.text)) {
+    let questions = getQuestions();
+    if (existsQuestion(data.text)) {
         return new Response(JSON.stringify({ error: "Question already exists" }), { status: 400 });
     }
-    await addQuestion(data.text);
+    addQuestion(data.text);
     return new Response(JSON.stringify({ success: true }));
 }
