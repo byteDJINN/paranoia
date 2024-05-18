@@ -1,4 +1,4 @@
-FROM debian
+FROM debian:latest
 COPY . .
 RUN apt update
 RUN apt -y install nodejs npm
