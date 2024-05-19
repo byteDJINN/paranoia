@@ -22,7 +22,6 @@ export async function POST({ request, platform }) {
         return new Response(JSON.stringify({ error: "Question must be at least 1 character" }), { status: 400 });
     }
     // check if it already exists
-    let questions = getQuestions();
     if (existsQuestion(data.text)) {
         return new Response(JSON.stringify({ error: "Question already exists" }), { status: 400 });
     }

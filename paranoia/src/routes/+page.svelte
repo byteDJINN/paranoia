@@ -105,13 +105,14 @@
   async function addQuestion() {
     const btn = document.getElementById('addQuestionButton');
     btn.classList.add('animate-spin'); setTimeout(() => btn.classList.remove('animate-spin'), 250);
+    const input = newQuestion.trim();
     newQuestion = '';
     const response = await fetch('/api/questions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ text: newQuestion }),
+      body: JSON.stringify({ text: input }),
     });
     const data = await response.json();
     if (response.status === 400) {
