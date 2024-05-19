@@ -20,6 +20,7 @@
     examples = data.split('\n');
     examples = examples.map((example) => example.trim());
     typeExample();
+    await getQuestions(1); // first long poll request is consumed for alive
     longPoll();
     getOnlineCount();
     setInterval(getOnlineCount, 10000);
