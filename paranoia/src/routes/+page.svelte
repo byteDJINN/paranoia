@@ -103,6 +103,9 @@
   }
 
   async function addQuestion() {
+    const btn = document.getElementById('addQuestionButton');
+    btn.classList.add('animate-spin'); setTimeout(() => btn.classList.remove('animate-spin'), 250);
+    newQuestion = '';
     const response = await fetch('/api/questions', {
       method: 'POST',
       headers: {
@@ -115,7 +118,6 @@
       console.error(data.error);
       return;
     }
-    newQuestion = '';
   }
 
   async function submitVotes() {
@@ -200,7 +202,8 @@
           class="p-2 flex-grow border rounded"
         />
         <button
-          on:click={(e) => { addQuestion(); e.target.classList.add('animate-spin'); setTimeout(() => e.target.classList.remove('animate-spin'), 250); }}
+          id = "addQuestionButton"
+          on:click={(e) => { addQuestion(); }}
           class="relative overflow-hidden p-2 ml-2 bg-purple-800 text-white rounded-full"
           style="width: 40px; height: 40px;"
         >
