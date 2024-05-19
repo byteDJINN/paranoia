@@ -6,6 +6,7 @@
   let questions = {};
   let userId = null;
   let examples = [];
+  let onlineCount = 0;
 
   onMount(async () => {
     await getQuestions();
@@ -20,6 +21,8 @@
     examples = examples.map((example) => example.trim());
     typeExample();
     longPoll();
+    getOnlineCount();
+    setInterval(getOnlineCount, 10000);
   });
 
   // constant enforcement
@@ -114,6 +117,12 @@
     }
   }
 
+  async function getOnlineCount() {
+    const response = await fetch('/api/online');
+    const data = await response.json();
+    onlineCount = data.count;
+  }
+
 
   function handleTapQuestion(event) {
     //rippleEffect(event);
@@ -139,8 +148,13 @@
 
 
 </script>
-
-<div class="container mx-auto p-4 min-h-screen h-full flex flex-col bg-gray-100">
+<div class="fixed h-[20px] top-0 left-0 right-0 bg-gray-200 flex justify-center z-10">
+  <span class="flex items-center">
+    <span class="inline-block w-2 h-2 mt-[2px] bg-green-500 rounded-full mr-2"></span>
+    {onlineCount} online
+  </span>
+</div>
+<div class="container mx-auto mt-[2vh] p-4 min-h-screen h-full flex flex-col bg-gray-200">
   <div id="viewAll">
     <ul class="list-none p-0 flex-grow overflow-y-auto mb-16 relative">
       {#each Object.keys(questions).sort((a, b) => {
@@ -149,7 +163,7 @@
         }
         return questions[b].votes - questions[a].votes;
       }) as question}
-        <li on:click={handleTapQuestion} class="relative flex justify-between overflow-hidden mb-2 rounded transition {votes.includes(question) ? 'bg-purple-200 ' : 'bg-white'}">
+        <li on:click={handleTapQuestion} class="relative shadow flex justify-between overflow-hidden mb-2 rounded transition {votes.includes(question) ? 'bg-purple-200 ' : 'bg-white'}">
           <span class="m-2">{question}</span>
           <span class="flex items-center px-2 bg-purple-800 text-white">
             {questions[question].votes}
@@ -157,7 +171,7 @@
         </li>
       {/each}
     </ul>
-    <div class="fixed bottom-0 left-0 right-0 px-4 py-1 bg-white shadow-lg">
+    <div class="fixed bottom-0 left-0 right-0 px-4 py-1 bg-gray-200 shadow-lg">
       <div class="flex items-center">
         <textarea
           id="questionInput"
