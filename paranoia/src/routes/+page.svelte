@@ -132,8 +132,22 @@
     const index = votes.findIndex((vote) => vote === question);
     if (index === -1) {
       votes = [...votes, question];
+      questions = {
+        ...questions,
+        [question]: {
+          ...questions[question],
+          votes: questions[question].votes + 1,
+        },
+      };
     } else {
       votes = votes.filter((vote) => vote !== question);
+      questions = {
+        ...questions,
+        [question]: {
+          ...questions[question],
+          votes: questions[question].votes - 1,
+        },
+      };
     }
     localStorage.setItem('votes', JSON.stringify(votes));
     submitVotes();
