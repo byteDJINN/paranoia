@@ -1,8 +1,9 @@
 import { Broadcaster } from './broadcaster';
 import { v4 as uuid } from 'uuid';
 import { examples } from '$lib/examples';
+import config from './config';
 
-const maxQuestions = 100;
+
 
 interface QuestionData {
   text: string;
@@ -23,14 +24,13 @@ let votes: { [key: string]: Vote } = {};
 
 // use the $static/examples.txt split one on each line to list
 let lastAutoPost = Date.now();
-const autoPostInterval = 30000;
 
 setInterval(() => {
-  if (Date.now() - lastAutoPost > autoPostInterval) {
+  if (Date.now() - lastAutoPost > config.AUTO_POST_INTERVAL) {
     lastAutoPost = Date.now();
     addQuestion(examples[Math.floor(Math.random() * examples.length)]);
   }
-}, 10000);
+},config.AUTO_POST_INTERVAL);
 
 export const changeBroadcaster: Broadcaster = new Broadcaster();
 
@@ -52,8 +52,12 @@ export function existsQuestion(question: string) {
   return question in questions;
 }
 
+export function existsUserId(userId: string) {
+  return userId in votes;
+}
+
 function checkQuestions() {
-  if (Object.keys(questions).length > maxQuestions) {
+  if (Object.keys(questions).length > config.MAX_QUESTIONS) {
     // Find the oldest question with the least votes
     let oldestQuestion: string | null = null;
     let minVotes = Infinity;
@@ -77,7 +81,7 @@ function checkQuestions() {
 
 function checkVotes() {
   for (const userId in votes) {
-    if (!changeBroadcaster.getWaitingUsers().includes(userId)) {
+    if (Date.now() - votes[userId].timestamp > config.CLIENT_TIMEOUT) {
       votes[userId].questions.forEach((question) => {
         if (existsQuestion(question)) {
           questions[question].votes -= 1;

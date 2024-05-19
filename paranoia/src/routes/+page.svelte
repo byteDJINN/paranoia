@@ -7,10 +7,12 @@
   let userId = null;
   let examples = [];
   let onlineCount = 0;
+  let onlineStatus = false;
+  let displayQuestions = {};
 
   onMount(async () => {
-    await getQuestions();
     await getUserId();
+    await getQuestions();
     // check localstorage for votes
     if (localStorage.getItem('votes')) {
       votes = JSON.parse(localStorage.getItem('votes'));
@@ -20,7 +22,6 @@
     examples = data.split('\n');
     examples = examples.map((example) => example.trim());
     typeExample();
-    await getQuestions(1); // first long poll request is consumed for alive
     longPoll();
     getOnlineCount();
     setInterval(getOnlineCount, 10000);
@@ -31,6 +32,16 @@
     newQuestion = newQuestion.replace(/[^a-zA-Z0-9 ]/g, '');
     if (newQuestion.length > 0 && newQuestion[0] === ' ') {
       newQuestion = newQuestion.trimStart();
+    }
+  }
+
+  $: {
+    displayQuestions = {};
+    for (const question in questions) {
+      displayQuestions[question] = {
+        votes: questions[question].votes + (votes.includes(question) ? 1 : 0),
+        timestamp: questions[question].timestamp,
+      };
     }
   }
 
@@ -77,10 +88,14 @@
   async function getQuestions(poll=0) {
     const response = poll ? await fetch(`/api/questions?userId=${userId}`) : await fetch('/api/questions');
     const data = await response.json();
+    let resQuestions = data.questions;
+
     if (data.votes[userId]) {
-      votes = data.votes[userId].questions;
+      for (const vote of data.votes[userId].questions) {
+        resQuestions[vote].votes -= 1;
+      }
     }
-    questions = data.questions;
+    questions = resQuestions;
     if (response.status === 400) {
       console.error(data.error);
     }
@@ -119,9 +134,10 @@
   }
 
   async function getOnlineCount() {
-    const response = await fetch('/api/online');
+    const response = await fetch(`/api/online?userId=${userId}`);
     const data = await response.json();
     onlineCount = data.count;
+    onlineStatus = data.online;
   }
 
 
@@ -133,22 +149,8 @@
     const index = votes.findIndex((vote) => vote === question);
     if (index === -1) {
       votes = [...votes, question];
-      questions = {
-        ...questions,
-        [question]: {
-          ...questions[question],
-          votes: questions[question].votes + 1,
-        },
-      };
     } else {
       votes = votes.filter((vote) => vote !== question);
-      questions = {
-        ...questions,
-        [question]: {
-          ...questions[question],
-          votes: questions[question].votes - 1,
-        },
-      };
     }
     localStorage.setItem('votes', JSON.stringify(votes));
     submitVotes();
@@ -165,23 +167,23 @@
 </script>
 <div class="fixed h-[20px] top-0 left-0 right-0 bg-gray-200 flex justify-center z-10">
   <span class="flex items-center">
-    <span class="inline-block w-2 h-2 mt-[2px] bg-green-500 rounded-full mr-2"></span>
+    <span class="inline-block w-2 h-2 mt-[2px] {onlineStatus ? "bg-green-500" : "bg-red-500"} rounded-full mr-2"></span>
     {onlineCount} online
   </span>
 </div>
 <div class="container mx-auto mt-[2vh] p-4 min-h-screen h-full flex flex-col bg-gray-200">
   <div id="viewAll">
     <ul class="list-none p-0 flex-grow overflow-y-auto mb-16 relative">
-      {#each Object.keys(questions).sort((a, b) => {
-        if (questions[b].votes === questions[a].votes) {
-          return questions[b].timestamp - questions[a].timestamp;
+      {#each Object.keys(displayQuestions).sort((a, b) => {
+        if (displayQuestions[b].votes === displayQuestions[a].votes) {
+          return displayQuestions[b].timestamp - displayQuestions[a].timestamp;
         }
-        return questions[b].votes - questions[a].votes;
+        return displayQuestions[b].votes - displayQuestions[a].votes;
       }) as question}
         <li on:click={handleTapQuestion} class="relative shadow flex justify-between overflow-hidden mb-2 rounded transition {votes.includes(question) ? 'bg-purple-200 ' : 'bg-white'}">
           <span class="m-2">{question}</span>
           <span class="flex items-center px-2 bg-purple-800 text-white">
-            {questions[question].votes}
+            {displayQuestions[question].votes}
           </span>
         </li>
       {/each}

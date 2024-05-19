@@ -1,20 +1,30 @@
+import config from "./config";
+
 type Listener = {
   userId: string;
   toUpdate: boolean; // marks if this client is lagging behin the server
-  resolve: () => void;
-  alive: () => void; // this is always kept open as a signal that the client is still connected
+  resolve?: () => void;
+  lastUpdate: number;
 };
 
 export class Broadcaster {
   private listeners: { [userId: string]: Listener } = {};
 
-  broadcast() {
+  private checkAlive() {
     for (const userId in this.listeners) {
-      // if it has resolve and alive
-      if (this.listeners[userId].resolve) {
-        this.listeners[userId].resolve();
-        this.listeners[userId].resolve = null;
-      // if it just has alive
+      if (Date.now() - this.listeners[userId].lastUpdate > config.CLIENT_TIMEOUT) {
+        delete this.listeners[userId];
+      }
+    }
+  }
+
+  broadcast() {
+    this.checkAlive();
+    for (const userId in this.listeners) {
+      if (this.listeners[userId].resolve !== undefined) {
+        const resolve = this.listeners[userId].resolve;
+        this.listeners[userId].resolve = undefined;
+        resolve();
       } else {
         this.listeners[userId].toUpdate = true;
       }
@@ -22,29 +32,33 @@ export class Broadcaster {
   }
 
   onBroadcast(userId: string, resolve: () => void) {
-    if (!(userId in this.listeners)) {
-      this.listeners[userId] = {
-        userId: userId,
-        toUpdate: false,
-        resolve: null,
-        alive: resolve,
-      };
-    } else {
-      this.listeners[userId].resolve = resolve;
-      // immediately resolve if there have been changes between the client's requests
+    if (userId in this.listeners) {
+      // immediately resolve if there have been changes since the client's last update
       if (this.listeners[userId].toUpdate) {
-        resolve();
+        // take a copy of resolve
+        this.listeners[userId].resolve = undefined;
         this.listeners[userId].toUpdate = false;
+        resolve();
+      } else {
+        this.listeners[userId].resolve = resolve;
       }
+    } else {
+      this.listeners[userId] = {
+        userId,
+        toUpdate: false,
+        resolve,
+        lastUpdate: Date.now(),
+      };
     }
   }
 
   wait(userId: string): Promise<void> {
-    return Promise.race([
-      new Promise<void>((resolve) => {
-        this.onBroadcast(userId, resolve);
-      })
-    ]);
+    if (userId in this.listeners) {
+      this.listeners[userId].lastUpdate = Date.now();
+    }
+    return new Promise<void>((resolve) => {
+      this.onBroadcast(userId, resolve);
+    });
   }
 
   getWaitingUsers(): string[] {
